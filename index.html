@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HabitPulse — Interactive Habit & Streak Tracker</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="brand-area">
+        <div class="brand-logo">⚡</div>
+        <div>
+          <h1>HabitPulse</h1>
+          <p class="subtitle">Daily Goal Logger & Weekly Streak Analytics</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="themeToggleBtn" class="btn btn-outline" title="Toggle Dark/Light Mode">
+          <span id="themeIcon">☀️</span> <span class="hide-sm">Theme</span>
+        </button>
+        <button id="restoreSampleBtn" class="btn btn-outline" title="Restore Sample Habits">
+          🔄 <span class="hide-sm">Reset Sample</span>
+        </button>
+        <button id="openAddModalBtn" class="btn btn-primary">
+          + New Habit
+        </button>
+      </div>
+    </header>
+
+    <!-- KPI Cards Row -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <span class="kpi-label">Weekly Completion</span>
+          <h2 id="kpiWeeklyScore">0%</h2>
+          <span id="kpiTasksCompleted" class="kpi-sub">0 / 0 check-ins</span>
+        </div>
+        <div class="ring-wrap">
+          <svg class="progress-ring" width="64" height="64">
+            <circle class="ring-bg" cx="32" cy="32" r="26"></circle>
+            <circle id="scoreRingCircle" class="ring-fill" cx="32" cy="32" r="26"></circle>
+          </svg>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <span class="kpi-label">Top Active Streak</span>
+          <h2 id="kpiTopStreak">0 Days</h2>
+          <span id="kpiTopHabitName" class="kpi-sub">No active streaks</span>
+        </div>
+        <div class="kpi-icon-box streak-glow">🔥</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-info">
+          <span class="kpi-label">Today's Progress (<span id="selectedDayLabel">Wed</span>)</span>
+          <h2 id="kpiTodayCount">0 / 0</h2>
+          <span id="kpiTodayStatus" class="kpi-sub">Click a day column to inspect</span>
+        </div>
+        <div class="kpi-icon-box">🎯</div>
+      </div>
+    </section>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+      <!-- Left: 7-Day Habit Matrix -->
+      <section class="card matrix-card">
+        <div class="card-header">
+          <div>
+            <h3>Weekly Habit Matrix</h3>
+            <p class="card-sub">Click cells to log goals • Use the trash button or Manage mode to remove habits</p>
+          </div>
+          <div class="matrix-controls">
+            <button id="deleteSelectedBtn" class="btn btn-danger hidden">
+              🗑️ Delete Selected (<span id="selectedCount">0</span>)
+            </button>
+            <button id="manageModeBtn" class="btn btn-outline">
+              ⚙️ Manage Habits
+            </button>
+          </div>
+        </div>
+
+        <!-- Category Filter Pills -->
+        <div class="filter-bar" id="categoryFilterBar">
+          <button class="filter-pill active" data-cat="All">All Habits</button>
+          <button class="filter-pill" data-cat="Coding">💻 Coding</button>
+          <button class="filter-pill" data-cat="Academics">🎓 Academics</button>
+          <button class="filter-pill" data-cat="Creative">🎨 Creative</button>
+          <button class="filter-pill" data-cat="Mind & Growth">📚 Mind & Growth</button>
+          <button class="filter-pill" data-cat="Fitness">💪 Fitness</button>
+        </div>
+
+        <!-- Table Wrapper -->
+        <div class="table-responsive" id="tableWrapper">
+          <table class="habit-table">
+            <thead>
+              <tr>
+                <th class="select-col hidden" id="selectAllTh">
+                  <input type="checkbox" id="selectAllCheckbox" title="Select All Habits" />
+                </th>
+                <th class="habit-col">Habit</th>
+                <th class="day-th" data-day="0">Mon</th>
+                <th class="day-th" data-day="1">Tue</th>
+                <th class="day-th" data-day="2">Wed</th>
+                <th class="day-th" data-day="3">Thu</th>
+                <th class="day-th" data-day="4">Fri</th>
+                <th class="day-th" data-day="5">Sat</th>
+                <th class="day-th" data-day="6">Sun</th>
+                <th class="streak-col">Streak</th>
+                <th class="action-col">Remove</th>
+              </tr>
+            </thead>
+            <tbody id="habitTableBody">
+              <!-- Populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State (Shown when 0 habits exist) -->
+        <div id="emptyState" class="empty-state hidden">
+          <div class="empty-icon">📋</div>
+          <h4>No Habits in Your Tracker</h4>
+          <p>Start building your weekly routine by adding a custom habit or restoring the default starter set.</p>
+          <div class="empty-actions">
+            <button id="emptyAddBtn" class="btn btn-primary">+ Add First Habit</button>
+            <button id="emptyRestoreBtn" class="btn btn-outline">🔄 Restore Sample Habits</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Weekly Streak Chart & Category Mastery -->
+      <aside class="analytics-column">
+        <!-- Weekly Bar Chart Card -->
+        <section class="card chart-card">
+          <div class="card-header">
+            <div>
+              <h3>Weekly Streak Chart</h3>
+              <p class="card-sub">Daily completion rate (Mon – Sun)</p>
+            </div>
+            <span class="badge" id="chartActiveDayBadge">Inspecting: Wed</span>
+          </div>
+
+          <div class="bar-chart-container" id="weeklyBarChart">
+            <!-- Populated by JS -->
+          </div>
+        </section>
+
+        <!-- Category Breakdown Card -->
+        <section class="card category-card">
+          <div class="card-header">
+            <div>
+              <h3>Category Mastery</h3>
+              <p class="card-sub">Completion by goal area</p>
+            </div>
+          </div>
+          <div id="categoryBreakdownList" class="category-list">
+            <!-- Populated by JS -->
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Add New Habit Modal -->
+  <div id="addHabitModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Create New Daily Habit</h3>
+        <button id="closeModalBtn" class="icon-close-btn">✕</button>
+      </div>
+      <form id="addHabitForm">
+        <div class="form-group">
+          <label for="habitNameInput">Habit Title</label>
+          <input type="text" id="habitNameInput" placeholder="e.g., Solve 2 DSA Problems in C/Java" required maxlength="45" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="habitCategoryInput">Category</label>
+            <select id="habitCategoryInput">
+              <option value="Coding">💻 Coding</option>
+              <option value="Academics">🎓 Academics</option>
+              <option value="Creative">🎨 Creative</option>
+              <option value="Mind & Growth">📚 Mind & Growth</option>
+              <option value="Fitness">💪 Fitness</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="habitIconInput">Icon</label>
+            <select id="habitIconInput">
+              <option value="💻">💻 Laptop</option>
+              <option value="📊">📊 Data / Chart</option>
+              <option value="🎨">🎨 Sketch / Art</option>
+              <option value="📖">📖 Book</option>
+              <option value="🗣️">🗣️ Speaking</option>
+              <option value="🏋️">🏋️ Workout</option>
+              <option value="⚡">⚡ Focus</option>
+              <option value="📷">📷 Camera</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Accent Color</label>
+          <div class="color-picker" id="colorPicker">
+            <button type="button" class="color-swatch selected" data-color="#6366f1" style="background:#6366f1"></button>
+            <button type="button" class="color-swatch" data-color="#10b981" style="background:#10b981"></button>
+            <button type="button" class="color-swatch" data-color="#f59e0b" style="background:#f59e0b"></button>
+            <button type="button" class="color-swatch" data-color="#ec4899" style="background:#ec4899"></button>
+            <button type="button" class="color-swatch" data-color="#06b6d4" style="background:#06b6d4"></button>
+            <button type="button" class="color-swatch" data-color="#8b5cf6" style="background:#8b5cf6"></button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="cancelModalBtn" class="btn btn-outline">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Habit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Undo Delete Toast Notification -->
+  <div id="undoToast" class="undo-toast hidden">
+    <span id="undoToastMessage">Habit removed</span>
+    <button id="undoDeleteBtn" class="undo-btn">↩ Undo</button>
+  </div>
+
+  <!-- Main JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
